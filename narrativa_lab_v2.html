@@ -1,0 +1,444 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--color-background-primary);color:var(--color-text-primary);font-size:14px;line-height:1.6}
+
+.nl-header{padding:20px 24px 16px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.nl-logo{font-size:18px;font-weight:500;letter-spacing:-.02em}
+.nl-logo span{color:var(--color-text-secondary);font-weight:300}
+.nl-version{font-size:11px;color:var(--color-text-tertiary);padding:3px 8px;border:0.5px solid var(--color-border-tertiary);border-radius:20px}
+
+.nl-tabs{display:flex;border-bottom:0.5px solid var(--color-border-tertiary);overflow-x:auto;scrollbar-width:none}
+.nl-tabs::-webkit-scrollbar{display:none}
+.nl-tab{flex-shrink:0;padding:12px 18px;font-size:12px;font-weight:400;color:var(--color-text-secondary);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.02em}
+.nl-tab:hover{color:var(--color-text-primary)}
+.nl-tab.on{color:var(--color-text-primary);font-weight:500;border-bottom-color:var(--color-text-primary)}
+
+.nl-body{padding:20px 24px;max-width:680px}
+
+.nl-panel{display:none}
+.nl-panel.on{display:block}
+
+.nl-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.7;padding:12px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);margin-bottom:20px;border-left:3px solid var(--color-border-secondary)}
+.nl-desc strong{color:var(--color-text-primary);font-weight:500}
+
+.nl-field{margin-bottom:16px}
+.nl-label{display:block;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:6px}
+.nl-hint{font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px;font-style:italic}
+
+input[type=text],textarea,select{width:100%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);color:var(--color-text-primary);padding:10px 12px;font-family:var(--font-sans);font-size:13px;outline:none;transition:border-color .15s;resize:vertical}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--color-text-primary)}
+input::placeholder,textarea::placeholder{color:var(--color-text-tertiary)}
+select option{background:var(--color-background-secondary)}
+textarea{min-height:90px}
+
+.nl-checks{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.nl-check{position:relative}
+.nl-check input{position:absolute;opacity:0;width:0;height:0}
+.nl-check label{display:block;font-size:11px;padding:5px 10px;border:0.5px solid var(--color-border-secondary);border-radius:20px;cursor:pointer;color:var(--color-text-secondary);transition:all .15s;user-select:none}
+.nl-check label:hover{border-color:var(--color-border-primary);color:var(--color-text-primary)}
+.nl-check input:checked + label{border-color:var(--color-text-primary);color:var(--color-text-primary);background:var(--color-background-secondary);font-weight:500}
+
+.nl-divider{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--color-text-tertiary);margin:20px 0 14px;display:flex;align-items:center;gap:8px}
+.nl-divider::after{content:'';flex:1;height:0.5px;background:var(--color-border-tertiary)}
+
+.nl-btn{display:inline-flex;align-items:center;gap:8px;background:var(--color-text-primary);color:var(--color-background-primary);font-family:var(--font-sans);font-size:13px;font-weight:500;padding:11px 20px;border:none;border-radius:var(--border-radius-md);cursor:pointer;transition:opacity .15s;margin-top:8px}
+.nl-btn:hover{opacity:.85}
+.nl-btn:active{opacity:.7}
+
+.nl-footer{padding:12px 24px;border-top:0.5px solid var(--color-border-tertiary);font-size:11px;color:var(--color-text-tertiary)}
+</style>
+
+<div style="min-height:400px;display:flex;flex-direction:column">
+
+  <div class="nl-header">
+    <div class="nl-logo">Narrativa<span>.LAB</span></div>
+    <div class="nl-version">v2.0 · Claude</div>
+  </div>
+
+  <div class="nl-tabs">
+    <button class="nl-tab on" onclick="showPanel('analise',this)">Análise</button>
+    <button class="nl-tab" onclick="showPanel('criacao',this)">Criação</button>
+    <button class="nl-tab" onclick="showPanel('diagnostico',this)">Diagnóstico</button>
+    <button class="nl-tab" onclick="showPanel('dna',this)">DNA Criativo</button>
+  </div>
+
+  <div class="nl-body">
+
+    <!-- ANÁLISE -->
+    <div class="nl-panel on" id="panel-analise">
+      <div class="nl-desc">
+        <strong>Análise estrutural completa</strong> — Story Circle, Beat Sheet, Ficha de Protagonista, MICE Quotient, Conflito-motor, Subversões e Encruzilhadas. Ao final você pode pedir a Ficha de Biblioteca para salvar.
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Título da obra</label>
+        <input type="text" id="a-titulo" placeholder="Ex: Better Call Saul">
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Criador(es)</label>
+        <input type="text" id="a-autor" placeholder="Ex: Vince Gilligan, Peter Gould">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="nl-field">
+          <label class="nl-label">Ano</label>
+          <input type="text" id="a-ano" placeholder="Ex: 2015–2022">
+        </div>
+        <div class="nl-field">
+          <label class="nl-label">Mídia</label>
+          <select id="a-midia">
+            <option>Série</option>
+            <option>Filme</option>
+            <option>Livro</option>
+            <option>Anime</option>
+            <option>Jogo</option>
+            <option>HQ</option>
+            <option>Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="nl-divider">Módulos</div>
+
+      <div class="nl-checks">
+        <div class="nl-check"><input type="checkbox" id="m1" checked><label for="m1">Story Circle</label></div>
+        <div class="nl-check"><input type="checkbox" id="m2" checked><label for="m2">Beat Sheet</label></div>
+        <div class="nl-check"><input type="checkbox" id="m3" checked><label for="m3">Ficha de Personagem</label></div>
+        <div class="nl-check"><input type="checkbox" id="m4" checked><label for="m4">MICE Quotient</label></div>
+        <div class="nl-check"><input type="checkbox" id="m5" checked><label for="m5">Conflito-Motor</label></div>
+        <div class="nl-check"><input type="checkbox" id="m6"><label for="m6">Worldbuilding</label></div>
+        <div class="nl-check"><input type="checkbox" id="m7" checked><label for="m7">Subversões</label></div>
+        <div class="nl-check"><input type="checkbox" id="m8"><label for="m8">Encruzilhadas</label></div>
+      </div>
+
+      <div class="nl-field" style="margin-top:16px">
+        <label class="nl-label">Foco ou contexto adicional <span style="font-weight:300;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <textarea id="a-contexto" placeholder="Ex: quero focar no arco de deterioração do protagonista..."></textarea>
+      </div>
+
+      <button class="nl-btn" onclick="runAnalise()">→ Analisar obra</button>
+    </div>
+
+    <!-- CRIAÇÃO -->
+    <div class="nl-panel" id="panel-criacao">
+      <div class="nl-desc">
+        <strong>Scaffolding de projeto narrativo</strong> — o assistente identifica em que etapa você está e oferece a ferramenta certa. Nunca escreve por você: faz as perguntas que fazem você descobrir.
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Nome do projeto <span style="font-weight:300;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="c-nome" placeholder="Ex: O Mercado dos Esquecidos">
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Onde você está agora</label>
+        <select id="c-etapa">
+          <option value="não sei — deixa o assistente identificar">Não sei — deixa o assistente identificar</option>
+          <option value="Centelha — tenho uma ideia ou imagem">Centelha — tenho uma ideia ou imagem</option>
+          <option value="Premissa — tenho uma situação, sem personagem claro">Premissa — tenho uma situação</option>
+          <option value="Personagem — tenho protagonista, sem estrutura">Personagem — tenho protagonista</option>
+          <option value="Estrutura — tenho premissa e personagem, sem beats">Estrutura — tenho premissa e personagem</option>
+          <option value="Rascunho — tenho material escrito, quero feedback estrutural">Rascunho — tenho texto escrito</option>
+        </select>
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Descreva seu projeto</label>
+        <div class="nl-hint">Pode ser uma frase, uma imagem, uma premissa bruta. Não precisa estar organizado.</div>
+        <textarea id="c-desc" style="min-height:120px" placeholder="Ex: uma auditora que trabalha num sistema de extração de memórias descobre que a memória fundacional da sua República é fabricada...
+
+Ou só: uma cidade que vende sonhos mas cobra demais pelo serviço."></textarea>
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Ferramenta específica <span style="font-weight:300;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <select id="c-ferramenta">
+          <option value="deixa o assistente decidir">Deixa o assistente decidir</option>
+          <option value="Logline">Logline</option>
+          <option value="Story Circle">Story Circle</option>
+          <option value="Ficha de Personagem">Ficha de Personagem</option>
+          <option value="Beat Sheet">Beat Sheet</option>
+          <option value="Sistema Especulativo">Sistema Especulativo (worldbuilding)</option>
+          <option value="MICE Quotient">MICE Quotient</option>
+          <option value="Checklist de Coerência">Checklist de Coerência</option>
+        </select>
+      </div>
+
+      <button class="nl-btn" onclick="runCriacao()">→ Desenvolver projeto</button>
+    </div>
+
+    <!-- DIAGNÓSTICO -->
+    <div class="nl-panel" id="panel-diagnostico">
+      <div class="nl-desc">
+        <strong>Diagnóstico de texto escrito</strong> — identifica armadilhas ativas com localização exata (info dump, protagonista reativo, tema pregado...), analisa voz e ritmo, e reescreve o maior problema encontrado. Começa sempre pelo que funciona.
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Cole seu trecho</label>
+        <div class="nl-hint">1 parágrafo ou 5 páginas. Quanto mais contexto, mais preciso o diagnóstico.</div>
+        <textarea id="d-texto" style="min-height:180px" placeholder="Cole aqui o trecho que quer diagnosticar..."></textarea>
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Contexto <span style="font-weight:300;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="d-ctx" placeholder="Ex: Abertura do cap. 3, POV da protagonista, tom noir...">
+      </div>
+
+      <div class="nl-divider">Foco</div>
+      <div class="nl-checks">
+        <div class="nl-check"><input type="checkbox" id="d1" checked><label for="d1">Armadilhas narrativas</label></div>
+        <div class="nl-check"><input type="checkbox" id="d2" checked><label for="d2">Voz e ritmo</label></div>
+        <div class="nl-check"><input type="checkbox" id="d3"><label for="d3">Diálogo</label></div>
+        <div class="nl-check"><input type="checkbox" id="d4"><label for="d4">Estrutura da cena</label></div>
+      </div>
+
+      <button class="nl-btn" style="margin-top:16px" onclick="runDiag()">→ Diagnosticar texto</button>
+    </div>
+
+    <!-- DNA -->
+    <div class="nl-panel" id="panel-dna">
+      <div class="nl-desc">
+        <strong>DNA Criativo</strong> — cole fichas de obras que escolheu incluir na biblioteca pessoal (não todas as que analisou — apenas as que representam seu gosto real). O assistente mapeia clusters, tensões criativas e o que ainda tem a ensinar para o seu perfil.
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Fichas da biblioteca pessoal</label>
+        <div class="nl-hint">Cole as fichas exportadas das análises que você escolheu incluir. Texto livre, sem formato rígido.</div>
+        <textarea id="dna-fichas" style="min-height:200px" oninput="contarFichas()" placeholder="Cole as fichas aqui. Exemplo:
+
+FICHA — Breaking Bad
+Conflito-motor: o sistema que você serve é o inimigo
+MICE: C dominante, abre e fecha com Character
+Arco: Walt começa como vítima e admite no final que fez por orgulho
+Subversão principal: protagonista se torna o antagonista real da própria história
+Beat mais valioso: Crawl Space (S04E11)
+...
+
+FICHA — Arrival (2016)
+..."></textarea>
+        <div id="dna-counter" style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">Aguardando fichas...</div>
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">Projeto atual <span style="font-weight:300;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="dna-proj" placeholder="Ex: estou desenvolvendo um thriller político biopunk">
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label">O que você quer saber</label>
+        <select id="dna-foco">
+          <option value="análise completa do DNA">Análise completa do DNA</option>
+          <option value="clusters dominantes">Apenas os clusters dominantes</option>
+          <option value="obras que mais têm a me ensinar agora">Obras que mais têm a me ensinar agora</option>
+          <option value="aplicação ao projeto atual">Aplicação ao projeto atual</option>
+          <option value="tensões criativas no meu perfil">Tensões criativas no meu perfil</option>
+        </select>
+      </div>
+
+      <button class="nl-btn" onclick="runDNA()">→ Mapear DNA criativo</button>
+    </div>
+
+  </div>
+
+  <div class="nl-footer">
+    As respostas aparecem nesta conversa com Claude · Narrativa.LAB v2.0
+  </div>
+
+</div>
+
+<script>
+function showPanel(id, btn) {
+  document.querySelectorAll('.nl-panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nl-tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('panel-' + id).classList.add('on');
+  btn.classList.add('on');
+}
+
+function v(id){ return (document.getElementById(id)||{}).value||''; }
+function chk(id){ return document.getElementById(id)?.checked; }
+
+function getModulos(){
+  const labels = ['Story Circle','Beat Sheet','Ficha de Personagem','MICE Quotient','Conflito-Motor','Worldbuilding','Subversões','Encruzilhadas'];
+  return labels.filter((_,i) => chk('m'+(i+1)));
+}
+
+function contarFichas(){
+  const txt = v('dna-fichas');
+  const n = (txt.match(/FICHA\s*[—\-–]/gi)||[]).length || (txt.trim().length > 80 ? 1 : 0);
+  document.getElementById('dna-counter').textContent = n === 0 ? 'Cole fichas acima' : n === 1 ? '1 ficha detectada' : n + ' fichas detectadas';
+}
+
+function runAnalise(){
+  const titulo = v('a-titulo');
+  if(!titulo){alert('Informe o título da obra.');return;}
+  const modulos = getModulos();
+  if(!modulos.length){alert('Selecione pelo menos um módulo.');return;}
+  const autor = v('a-autor');
+  const ano = v('a-ano');
+  const midia = v('a-midia');
+  const ctx = v('a-contexto');
+
+  const partes = modulos.map(m => {
+    if(m==='Story Circle') return `**STORY CIRCLE (Dan Harmon)**\nMapeie os 8 passos para o protagonista: (1)Você (2)Precisa (3)Vai (4)Busca (5)Encontra (6)Paga (7)Retorna (8)Mudou. Para cada passo: o que acontece na obra, qual cena específica representa o passo, e qual a tensão desejo externo vs. necessidade interna. Aponte o passo mais forte e o mais fraco.`;
+    if(m==='Beat Sheet') return `**BEAT SHEET**\nIdentifique com posição em % da obra: mundo comum (0-5%), incidente incitante (5-10%), primeiro ponto de virada (~25%), ponto médio (~50% — falsa vitória ou derrota?), crise/noite escura (~75%), clímax (~85-92%), resolução (~92-100%). O clímax é ganho pelo que o protagonista APRENDEU ou por sorte externa?`;
+    if(m==='Ficha de Personagem') return `**FICHA DO PROTAGONISTA**\nDesejo externo / Necessidade interna / A Mentira (crença limitante que opera inconscientemente) / O Fantasma (evento passado que criou a Mentira) / Hábito revelador (gesto ou comportamento sob pressão) / Arco completo em 2 frases.`;
+    if(m==='MICE Quotient') return `**MICE QUOTIENT (Orson Scott Card)**\nClassifique as camadas M (Milieu/exploração de mundo), I (Idea/pergunta a responder), C (Character/transformação interna), E (Event/problema externo). Qual camada ABRE a obra? Qual FECHA? A camada que abre é a mesma que fecha? Se não, como isso afeta a sensação de resolução?`;
+    if(m==='Conflito-Motor') return `**CONFLITO-MOTOR**\nIdentifique qual dos tipos é o motor principal: Desejo vs. necessidade / Valores em conflito / Informação assimétrica / Lealdades incompatíveis / Consequência não intencional / Percepção vs. realidade / Urgência vs. cuidado / Identidade sob pressão / Escassez forçando escolha / Herança do passado / Lealdade ao grupo vs. verdade / O sistema que você serve é o inimigo. Justifique com cena específica.`;
+    if(m==='Worldbuilding') return `**WORLDBUILDING**\nSistema especulativo: regra fundamental, o que é absolutamente impossível, custo físico + emocional + social do uso. Pilar econômico: qual é o recurso escasso REAL (pode não ser o óbvio). Pilar político: quem controla o quê e com qual legitimidade. Qual segredo, se revelado, destruiria o sistema de poder?`;
+    if(m==='Subversões') return `**SUBVERSÕES**\nIdentifique qual convenção (de estrutura, personagem, worldbuilding ou tropo) a obra subverte, exatamente como faz isso e por que a subversão funciona narrativamente.`;
+    if(m==='Encruzilhadas') return `**ENCRUZILHADAS DOCUMENTADAS**\nReconstrua 2-3 escolhas de criação: (1) opção escolhida pelo criador, (2) o que poderia ter sido diferente, (3) risco residual da escolha feita. Especule com base na obra — o que a alternativa teria mudado?`;
+    return '';
+  }).filter(Boolean).join('\n\n');
+
+  sendPrompt(`Você é o Narrativa.LAB no Modo Análise — sistema especializado em análise narrativa usando os frameworks do Dossiê de Engenharia Narrativa SFF.
+
+**OBRA:** ${titulo}${autor?'\n**CRIADOR:** '+autor:''}${ano?'\n**ANO:** '+ano:''}${midia?'\n**MÍDIA:** '+midia:''}${ctx?'\n**CONTEXTO DO USUÁRIO:** '+ctx:''}
+
+**MÓDULOS SOLICITADOS:** ${modulos.join(' · ')}
+
+Execute cada módulo com profundidade e especificidade — cite cenas e momentos exatos, nunca análise genérica. Use separadores visuais entre módulos.
+
+${partes}
+
+**SÍNTESE FINAL**
+O que esta obra ensina que outras do mesmo gênero não ensinam? Qual beat ou cena específica vale reanalisar para um escritor?
+
+Ao final, pergunte se o usuário quer a Ficha de Biblioteca desta análise para exportação.`);
+}
+
+function runCriacao(){
+  const desc = v('c-desc');
+  if(!desc){alert('Descreva seu projeto, mesmo que seja só uma frase.');return;}
+  const nome = v('c-nome');
+  const etapa = v('c-etapa');
+  const ferramenta = v('c-ferramenta');
+
+  sendPrompt(`Você é o Narrativa.LAB no Modo Criação — assistente socrático de desenvolvimento narrativo. Sua regra de ouro: nunca escreva pelo usuário, faça perguntas que o levem a descobrir as respostas.
+
+**PROJETO${nome?': '+nome:''}**
+**ETAPA DECLARADA:** ${etapa}
+**DESCRIÇÃO:**
+${desc}
+**FERRAMENTA PREFERIDA:** ${ferramenta}
+
+Proceda em ordem:
+
+1. **DIAGNÓSTICO DE ETAPA** — identifique onde o projeto realmente está: Centelha / Premissa / Personagem / Estrutura / Rascunho. Seja honesto se diferir do declarado.
+
+2. **O QUE FUNCIONA** — nomeie 1-2 elementos do material que já têm força. Sempre comece pelo positivo.
+
+3. **MAIOR PONTO DE ALAVANCAGEM** — qual é o elemento que, se resolvido, mais avançaria o projeto?
+
+4. **APLICAÇÃO DA FERRAMENTA** — ${ferramenta !== 'deixa o assistente decidir' ? 'use **'+ferramenta+'**.' : 'escolha a ferramenta mais adequada para o momento.'} Para qualquer ferramenta usada: faça UMA pergunta por campo, aguarde a resposta antes de avançar. Não preencha sem resposta do usuário.
+
+**FERRAMENTAS E COMO USAR:**
+
+LOGLINE: construa [Protagonista]+[situação]+[objetivo]+[obstáculo]+[stake]. Apresente 3 versões com tons diferentes.
+
+STORY CIRCLE: para cada um dos 8 passos, faça uma pergunta específica. Ao final mostre o Circle e aponte o passo mais fraco.
+
+FICHA DE PERSONAGEM: camada externa (desejo, habilidade, hábito, voz) + camada interna (necessidade, medo, ferida, A Mentira, O Fantasma) + arco em 2 frases.
+
+BEAT SHEET: verifique — incidente incitante antes dos 10%? Ponto médio é falsa vitória OU derrota? Clímax ganho pelo aprendizado?
+
+SISTEMA ESPECULATIVO: regra fundamental, impossível absoluto, custo triplo (físico/emocional/social), quem tem acesso, impacto econômico e político.
+
+**ARMADILHAS — avise sempre que identificar:** info dump, protagonista reativo, sistema sem custo, antagonista sem motivação, falsa escalada, tema pregado, resolução apressada.`);
+}
+
+function runDiag(){
+  const texto = v('d-texto');
+  if(!texto){alert('Cole um trecho de texto para diagnosticar.');return;}
+  const ctx = v('d-ctx');
+  const focos = ['Armadilhas narrativas','Voz e ritmo','Diálogo','Estrutura da cena'].filter((_,i)=>chk('d'+(i+1)));
+
+  sendPrompt(`Você é o Narrativa.LAB no Modo Diagnóstico — editor especializado em análise cirúrgica de texto narrativo. Cite localização exata (frase específica) para cada problema identificado.
+
+${ctx?'**CONTEXTO:** '+ctx+'\n':''}**FOCOS:** ${focos.join(' · ')}
+
+**TRECHO:**
+---
+${texto}
+---
+
+**ESTRUTURA DA RESPOSTA:**
+
+**1. O QUE FUNCIONA** (1-2 elementos específicos com citação do trecho)
+
+${focos.includes('Armadilhas narrativas')?`**2. ARMADILHAS IDENTIFICADAS**
+Verifique e cite a frase exata para cada encontrada:
+- INFO DUMP: blocos descritivos sem conflito ativo nos primeiros parágrafos
+- PROTAGONISTA REATIVO: ações que respondem a eventos sem iniciativa própria
+- DIÁLOGO EXPOSITIVO: personagem explica ao outro o que ele já saberia
+- TEMA PREGADO: personagem enuncia o tema em discurso direto
+- PERSONAGENS INTERCAMBIÁVEIS: falas que poderiam ser de qualquer um
+- SISTEMA SEM CUSTO: poder usado sem preço visível`:''}
+
+${focos.includes('Voz e ritmo')?`**3. VOZ E RITMO**
+- Consistência da voz narrativa dentro do trecho
+- O ritmo serve à emoção da cena?
+- Variação de comprimento de frase
+- Escolhas lexicais adequadas ao POV`:''}
+
+${focos.includes('Diálogo')?`**4. DIÁLOGO**
+- Vozes distinguíveis sem tag de narração?
+- Diálogo avança trama E revela personagem?
+- Alguma fala puramente expositiva?`:''}
+
+${focos.includes('Estrutura da cena')?`**5. ESTRUTURA DA CENA**
+- A cena tem objetivo, obstáculo e resultado?
+- O personagem termina diferente de como entrou?`:''}
+
+**6. REESCRITA SUGERIDA**
+Reescreva especificamente o trecho do maior problema. Mostre antes e depois.
+
+**7. PERGUNTA FINAL:** O que você queria que o leitor sentisse nesta cena?`);
+}
+
+function runDNA(){
+  const fichas = v('dna-fichas');
+  if(!fichas||fichas.trim().length<30){alert('Cole pelo menos uma ficha de biblioteca para análise.');return;}
+  const proj = v('dna-proj');
+  const foco = v('dna-foco');
+
+  sendPrompt(`Você é o Narrativa.LAB no Modo DNA Criativo. Leia TODAS as fichas abaixo antes de responder qualquer coisa. As fichas foram selecionadas manualmente pelo usuário para representar seu gosto real — trate cada uma como dado deliberado, não casual.
+
+**FICHAS DA BIBLIOTECA PESSOAL:**
+---
+${fichas}
+---
+${proj?'\n**PROJETO ATUAL DO USUÁRIO:** '+proj+'\n':''}
+**FOCO SOLICITADO:** ${foco}
+
+**EXECUTE A ANÁLISE:**
+
+**1. MAPEAMENTO DOS CLUSTERS**
+Para cada cluster, indique intensidade (quantas obras o ativam) e cite o exemplo mais forte:
+— Subversão e estranhamento (obras que violam convenções com intenção)
+— Psicologia densa (deterioração ou construção de identidade)
+— Tecnologia como distorção (tecnologia como espelho da condição humana)
+— Worldbuilding orgânico (mundos que parecem existir além do que é mostrado)
+— Política e espionagem (sistemas de poder via personagens)
+— Múltiplos POVs reveladores (verdade por interseção de perspectivas)
+— Sobrevivência e craftmanship (competência como revelação de caráter)
+— Nostalgia + arquétipo clássico (amor e desconfiança simultâneos do arquétipo)
+
+**2. TENSÕES CRIATIVAS**
+3-5 pares de tensão que coexistem no perfil. Ex: "herói clássico ↔ anti-herói em deterioração". Tensões não são contradições — são o espaço onde a voz original emerge.
+
+**3. PADRÕES ESTRUTURAIS**
+Tipo de arco dominante / MICE mais recorrente / Conflito-motor mais frequente / Tendência para resoluções claras ou ambíguas.
+
+**4. PERFIL SÍNTESE**
+150-200 palavras em segunda pessoa, como se descrevesse um autor para um editor. Específico — cite os títulos como evidência.
+
+**5. AS 3 OBRAS QUE MAIS TÊM A ENSINAR AGORA**
+Que desafiam ou expandem o DNA atual em vez de apenas confirmá-lo. Justifique cada uma.
+
+${proj?`**6. APLICAÇÃO AO PROJETO ATUAL**\nPara "${proj}": quais clusters já estão ativos, qual está ausente mas seria natural, qual obra da biblioteca seria a referência mais direta.`:''}
+
+Regra de ouro: nunca julgue o gosto — mapeie-o. Um DNA criativo é uma assinatura, não uma limitação.`);
+}
+</script>
