@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Narrativa.LAB v3 — Gerador de Narrativas &amp; Prompts</title>
+<style>
+:root{
+  --bg-primary:#0f1115;
+  --bg-secondary:#171a21;
+  --bg-tertiary:#1f242d;
+  --text-primary:#eceff4;
+  --text-secondary:#a3aab8;
+  --text-tertiary:#6e7687;
+  --border-primary:#353c4a;
+  --border-secondary:#272c37;
+  --accent:#7aa2f7;
+  --accent-hover:#89b4fa;
+  --success:#9ece6a;
+  --radius-md:8px;
+  --font-sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Helvetica,Arial,sans-serif;
+  --font-mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--bg-primary);color:var(--text-primary);font-size:14px;line-height:1.6}
+
+.nl-header{padding:18px 24px;border-bottom:1px solid var(--border-secondary);display:flex;align-items:center;justify-content:space-between;background:var(--bg-secondary)}
+.nl-logo{font-size:18px;font-weight:600;letter-spacing:-.02em}
+.nl-logo span{color:var(--accent);font-weight:400}
+.nl-version{font-size:11px;color:var(--text-secondary);padding:3px 10px;border:1px solid var(--border-primary);border-radius:20px}
+
+.nl-tabs{display:flex;border-bottom:1px solid var(--border-secondary);background:var(--bg-secondary);overflow-x:auto;scrollbar-width:none;padding:0 16px}
+.nl-tabs::-webkit-scrollbar{display:none}
+.nl-tab{flex-shrink:0;padding:12px 16px;font-size:13px;font-weight:400;color:var(--text-secondary);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.nl-tab:hover{color:var(--text-primary)}
+.nl-tab.on{color:var(--accent);font-weight:600;border-bottom-color:var(--accent)}
+
+.nl-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1280px;margin:0 auto;padding:24px}
+@media(max-width:960px){.nl-layout{grid-template-columns:1fr}}
+
+.nl-panel{display:none}
+.nl-panel.on{display:block}
+
+.nl-desc{font-size:12.5px;color:var(--text-secondary);line-height:1.65;padding:12px 14px;background:var(--bg-secondary);border-radius:var(--radius-md);margin-bottom:18px;border-left:3px solid var(--accent)}
+.nl-desc strong{color:var(--text-primary);font-weight:600}
+
+.nl-field{margin-bottom:15px}
+.nl-label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px}
+.nl-hint{font-size:11px;color:var(--text-tertiary);margin-bottom:6px;font-style:italic}
+
+input[type=text],textarea,select{width:100%;background:var(--bg-secondary);border:1px solid var(--border-secondary);border-radius:var(--radius-md);color:var(--text-primary);padding:10px 12px;font-family:var(--font-sans);font-size:13px;outline:none;transition:border-color .15s;resize:vertical}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--text-tertiary)}
+textarea{min-height:84px}
+
+.nl-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.nl-row{grid-template-columns:1fr}}
+
+.nl-checks{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.nl-check{position:relative}
+.nl-check input{position:absolute;opacity:0;width:0;height:0}
+.nl-check label{display:block;font-size:11.5px;padding:5px 11px;border:1px solid var(--border-secondary);border-radius:20px;cursor:pointer;color:var(--text-secondary);background:var(--bg-secondary);transition:all .15s;user-select:none}
+.nl-check label:hover{border-color:var(--border-primary);color:var(--text-primary)}
+.nl-check input:checked + label{border-color:var(--accent);color:var(--accent);background:rgba(122,162,247,0.1);font-weight:600}
+
+.nl-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:var(--radius-md);border:none;background:var(--accent);color:#0f1115;font-weight:600;font-size:13px;cursor:pointer;transition:background .15s}
+.nl-btn:hover{background:var(--accent-hover)}
+.nl-btn-sec{background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border-primary)}
+.nl-btn-sec:hover{background:var(--border-secondary)}
+
+.nl-output-box{background:var(--bg-secondary);border:1px solid var(--border-secondary);border-radius:var(--radius-md);padding:16px;display:flex;flex-direction:column;height:calc(100vh - 140px);min-height:480px;position:sticky;top:20px}
+.nl-output-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border-secondary)}
+.nl-output-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary)}
+.nl-output-actions{display:flex;gap:8px}
+.nl-output-pre{flex:1;width:100%;background:var(--bg-primary);border:1px solid var(--border-secondary);border-radius:var(--radius-md);padding:14px;color:var(--text-primary);font-family:var(--font-mono);font-size:12.5px;line-height:1.55;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+.nl-status{font-size:11.5px;color:var(--success);margin-left:8px;opacity:0;transition:opacity .2s}
+.nl-status.show{opacity:1}
+
+.nl-phase-pills{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.nl-phase-pill{padding:6px 12px;font-size:12px;border-radius:var(--radius-md);border:1px solid var(--border-secondary);background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;transition:all .15s}
+.nl-phase-pill.on{border-color:var(--accent);color:var(--accent);background:rgba(122,162,247,0.12);font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="nl-header">
+  <div class="nl-logo">Narrativa<span>.LAB</span></div>
+  <div class="nl-version">v3.0 · Gerador de Prompts &amp; Roteiros</div>
+</header>
+
+<nav class="nl-tabs">
+  <button class="nl-tab on" onclick="showPanel('pipeline',this)">Pipeline 6 Fases</button>
+  <button class="nl-tab" onclick="showPanel('criacao',this)">Criação Rápida</button>
+  <button class="nl-tab" onclick="showPanel('analise',this)">Análise de Obra</button>
+  <button class="nl-tab" onclick="showPanel('diagnostico',this)">Diagnóstico de Cena</button>
+  <button class="nl-tab" onclick="showPanel('dna',this)">DNA Criativo</button>
+</nav>
+
+<main class="nl-layout">
+  <!-- COLUNA ESQUERDA: PARÂMETROS -->
+  <section>
+    <!-- PAINEL 1: PIPELINE 6 FASES -->
+    <div id="panel-pipeline" class="nl-panel on">
+      <div class="nl-desc">
+        <strong>Pipeline em 6 Fases (Método Híbrido):</strong> Evolua sua história passo a passo — da descoberta do núcleo dramático até a escrita de cenas e revisão fina. Copie o prompt gerado e cole na sua IA favorita.
+      </div>
+
+      <div class="nl-field">
+        <span class="nl-label">Selecione a Fase</span>
+        <div class="nl-phase-pills">
+          <button type="button" class="nl-phase-pill on" onclick="setPhase(1,this)">1. Núcleo</button>
+          <button type="button" class="nl-phase-pill" onclick="setPhase(2,this)">2. Universo</button>
+          <button type="button" class="nl-phase-pill" onclick="setPhase(3,this)">3. Elenco</button>
+          <button type="button" class="nl-phase-pill" onclick="setPhase(4,this)">4. Estrutura</button>
+          <button type="button" class="nl-phase-pill" onclick="setPhase(5,this)">5. Escrita</button>
+          <button type="button" class="nl-phase-pill" onclick="setPhase(6,this)">6. Revisão</button>
+        </div>
+      </div>
+
+      <div class="nl-row">
+        <div class="nl-field">
+          <label class="nl-label" for="p-genero">Gênero / Subgênero</label>
+          <input type="text" id="p-genero" placeholder="Ex: Ficção Científica Social, Fantasia Sombria...">
+        </div>
+        <div class="nl-field">
+          <label class="nl-label" for="p-formato">Formato</label>
+          <select id="p-formato">
+            <option value="Romance">Romance (Livro)</option>
+            <option value="Conto / Noveleta">Conto / Noveleta</option>
+            <option value="Série (Temporada / Episódios)">Série (Temporada / Episódios)</option>
+            <option value="Campanha de RPG">Campanha de RPG</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label" for="p-premissa">Premissa / Ideia Central</label>
+        <textarea id="p-premissa" placeholder="Descreva a ideia central, o elemento especulativo ou o conflito inicial..."></textarea>
+      </div>
+
+      <div class="nl-row">
+        <div class="nl-field">
+          <label class="nl-label" for="p-abordagem">Abordagem</label>
+          <select id="p-abordagem">
+            <option value="Top-Down (do Macro/Universo para o Micro/Cena)">Top-Down (Universo → Cena)</option>
+            <option value="Bottom-Up (do Micro/Cena ou Personagem para o Macro)">Bottom-Up (Detalhe/Cena → Universo)</option>
+          </select>
+        </div>
+        <div class="nl-field">
+          <label class="nl-label" for="p-saida">Nível de Saída Desejado</label>
+          <select id="p-saida">
+            <option value="Guia / Roteiro estruturado em tópicos">Guia / Roteiro estruturado</option>
+            <option value="Narrativa resumida (sinopse expandida)">Narrativa resumida</option>
+            <option value="Narrativa completa (prosa / cenas)">Narrativa completa</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label" for="p-framework">Framework Estrutural</label>
+        <select id="p-framework">
+          <option value="Estrutura em Três Atos (Setup → Confronto → Resolução)">Três Atos (Clássico)</option>
+          <option value="Save the Cat (15 Beats)">Save the Cat (15 Beats)</option>
+          <option value="Story Circle de Dan Harmon (8 Passos)">Story Circle (Dan Harmon)</option>
+          <option value="Kishōtenketsu (4 Atos sem conflito central)">Kishōtenketsu (4 Atos)</option>
+          <option value="Pirâmide de Freytag (5 Estágios)">Pirâmide de Freytag</option>
+          <option value="Jornada do Herói (Campbell)">Jornada do Herói</option>
+          <option value="Arco Trágico / de Queda">Arco Trágico / de Queda</option>
+        </select>
+      </div>
+
+      <div class="nl-field">
+        <span class="nl-label">Módulos de Worldbuilding (Base do Repositório)</span>
+        <div class="nl-checks">
+          <div class="nl-check"><input type="checkbox" id="wb1" value="Física e Cosmologia" checked><label for="wb1">Física &amp; Cosmologia</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb2" value="Biologia e Ecologia"><label for="wb2">Biologia &amp; Ecologia</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb3" value="Economia e Recursos" checked><label for="wb3">Economia &amp; Recursos</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb4" value="Ciência Política e Poder" checked><label for="wb4">Política &amp; Poder</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb5" value="Sociologia e Castas"><label for="wb5">Sociologia</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb6" value="Religião e Mitopoiese"><label for="wb6">Religião &amp; Mito</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb7" value="Linguística e Xenolinguística"><label for="wb7">Linguística</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb8" value="Tecnologia Especulativa"><label for="wb8">Tecnologia</label></div>
+          <div class="nl-check"><input type="checkbox" id="wb9" value="Xenopsicologia"><label for="wb9">Xenopsicologia</label></div>
+        </div>
+      </div>
+
+      <div class="nl-field">
+        <span class="nl-label">Interação entre Civilizações / Espécies (Param01–09)</span>
+        <div class="nl-checks">
+          <div class="nl-check"><input type="checkbox" id="pm1" value="Barreira de Comunicação"><label for="pm1">Barreira de Comunicação</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm2" value="Transparência Intencional"><label for="pm2">Transparência Intencional</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm3" value="Assimetria de Escala Temporal"><label for="pm3">Assimetria Temporal</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm4" value="Contágio Cultural"><label for="pm4">Contágio Cultural</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm5" value="Dependência Assimétrica"><label for="pm5">Dependência Assimétrica</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm6" value="Compatibilidade Biológica"><label for="pm6">Compatibilidade Biológica</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm7" value="Memória do Primeiro Contato"><label for="pm7">Memória 1º Contato</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm8" value="Grau de Necessidade Mútua"><label for="pm8">Necessidade Mútua</label></div>
+          <div class="nl-check"><input type="checkbox" id="pm9" value="Compatibilidade Psicológica Profunda"><label for="pm9">Compatibilidade Psicológica</label></div>
+        </div>
+      </div>
+
+      <div class="nl-field">
+        <label class="nl-label" for="p-contexto">Contexto Acumulado (Opcional — cole aqui o resultado da fase anterior)</label>
+        <textarea id="p-contexto" placeholder="Se você já rodou a fase anterior, cole o resumo aqui para manter continuidade..."></textarea>
+      </div>
+
+      <button type="button" class="nl-btn" onclick="runPipeline()">Gerar Prompt da Fase</button>
+    </div>
+
+    <!-- PAINEL 2: CRIAÇÃO RÁPIDA -->
+    <div id="panel-criacao" class="nl-panel">
+      <div class="nl-desc">
+        <strong>Criação Rápida:</strong> Gere um roteiro completo ou narrativa em um único passo a partir dos parâmetros essenciais.
+      </div>
+      <div class="nl-field">
+        <label class="nl-label" for="c-ideia">Ideia / Premissa</label>
+        <textarea id="c-ideia" placeholder="Ex: Uma arquivista descobre que as memórias da cidade estão sendo editadas toda madrugada..."></textarea>
+      </div>
+      <div class="nl-row">
+        <div class="nl-field">
+          <label class="nl-label" for="c-tom">Tom e Atmosfera</label>
+          <input type="text" id="c-tom" placeholder="Ex: Melancólico, tenso, noir, épico...">
+        </div>
+        <div class="nl-field">
+          <label class="nl-label" for="c-protag">Protagonista</label>
+          <input type="text" id="c-protag" placeholder="Ex: Herdeira despreparada, ex-soldado...">
+        </div>
+      </div>
+      <div class="nl-field">
+        <label class="nl-label" for="c-conflito">Conflito Central &amp; Stakes</label>
+        <input type="text" id="c-conflito" placeholder="O que está em jogo se o protagonista falhar?">
+      </div>
+      <button type="button" class="nl-btn" onclick="runCriacao()">Gerar Prompt de Criação</button>
+    </div>
+
+    <!-- PAINEL 3: ANÁLISE -->
+    <div id="panel-analise" class="nl-panel">
+      <div class="nl-desc">
+        <strong>Análise de Obra:</strong> Desconstrua qualquer história (sua ou de referência) usando os frameworks do repositório.
+      </div>
+      <div class="nl-field">
+        <label class="nl-label" for="a-obra">Obra ou Sinopse para Analisar</label>
+        <textarea id="a-obra" placeholder="Cole a sinopse, resumo ou nome da obra..."></textarea>
+      </div>
+      <button type="button" class="nl-btn" onclick="runAnalise()">Gerar Prompt de Análise</button>
+    </div>
+
+    <!-- PAINEL 4: DIAGNÓSTICO -->
+    <div id="panel-diagnostico" class="nl-panel">
+      <div class="nl-desc">
+        <strong>Diagnóstico Cirúrgico:</strong> Cole uma cena ou capítulo para identificar armadilhas narrativas (info dump, diálogo expositivo, protagonista reativo).
+      </div>
+      <div class="nl-field">
+        <label class="nl-label" for="d-ctx">Contexto da Cena (Opcional)</label>
+        <input type="text" id="d-ctx" placeholder="Ex: Capítulo 3, logo após a traição...">
+      </div>
+      <div class="nl-field">
+        <label class="nl-label" for="d-texto">Trecho de Texto</label>
+        <textarea id="d-texto" style="min-height:140px" placeholder="Cole aqui a cena que deseja diagnosticar..."></textarea>
+      </div>
+      <div class="nl-field">
+        <span class="nl-label">Focos do Diagnóstico</span>
+        <div class="nl-checks">
+          <div class="nl-check"><input type="checkbox" id="d1" checked><label for="d1">Armadilhas narrativas</label></div>
+          <div class="nl-check"><input type="checkbox" id="d2" checked><label for="d2">Voz e ritmo</label></div>
+          <div class="nl-check"><input type="checkbox" id="d3" checked><label for="d3">Diálogo</label></div>
+          <div class="nl-check"><input type="checkbox" id="d4" checked><label for="d4">Estrutura da cena</label></div>
+        </div>
+      </div>
+      <button type="button" class="nl-btn" onclick="runDiag()">Gerar Prompt de Diagnóstico</button>
+    </div>
+
+    <!-- PAINEL 5: DNA CRIATIVO -->
+    <div id="panel-dna" class="nl-panel">
+      <div class="nl-desc">
+        <strong>DNA Criativo:</strong> Mapeie suas influências e tensões criativas a partir das suas obras favoritas.
+      </div>
+      <div class="nl-field">
+        <label class="nl-label" for="dna-fichas">Obras de Referência</label>
+        <textarea id="dna-fichas" placeholder="Liste livros, filmes ou séries que representam seu gosto e o que você admira neles..."></textarea>
+      </div>
+      <div class="nl-field">
+        <label class="nl-label" for="dna-proj">Projeto Atual (Opcional)</label>
+        <input type="text" id="dna-proj" placeholder="Nome ou premissa do seu projeto atual">
+      </div>
+      <button type="button" class="nl-btn" onclick="runDNA()">Gerar Prompt de DNA</button>
+    </div>
+  </section>
+
+  <!-- COLUNA DIREITA: SAÍDA DO PROMPT -->
+  <aside class="nl-output-box">
+    <div class="nl-output-head">
+      <div>
+        <span class="nl-output-title">Prompt Direcionado Gerado</span>
+        <span id="copy-status" class="nl-status">Copiado!</span>
+      </div>
+      <div class="nl-output-actions">
+        <button type="button" class="nl-btn nl-btn-sec" onclick="copyOutput()">Copiar</button>
+        <button type="button" class="nl-btn nl-btn-sec" onclick="downloadMd()">Baixar .md</button>
+      </div>
+    </div>
+    <pre id="nl-output" class="nl-output-pre">Preencha os parâmetros à esquerda e clique em "Gerar Prompt" para visualizar o resultado aqui.</pre>
+  </aside>
+</main>
+
+<script>
+let currentPhase = 1;
+
+function showPanel(id, btn){
+  document.querySelectorAll('.nl-panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nl-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('panel-'+id).classList.add('on');
+  btn.classList.add('on');
+}
+
+function setPhase(n, btn){
+  currentPhase = n;
+  document.querySelectorAll('.nl-phase-pill').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function v(id){ return (document.getElementById(id)||{}).value||''; }
+function chk(id){ return !!(document.getElementById(id)||{}).checked; }
+
+function getWBModules(){
+  const mods = [];
+  for(let i=1;i<=9;i++){
+    const el = document.getElementById('wb'+i);
+    if(el && el.checked) mods.push(el.value);
+  }
+  return mods;
+}
+
+function getInteractionParams(){
+  const params = [];
+  for(let i=1;i<=9;i++){
+    const el = document.getElementById('pm'+i);
+    if(el && el.checked) params.push(el.value);
+  }
+  return params;
+}
+
+function setOutput(text){
+  document.getElementById('nl-output').textContent = text;
+}
+
+function copyOutput(){
+  const text = document.getElementById('nl-output').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const st = document.getElementById('copy-status');
+    st.classList.add('show');
+    setTimeout(()=>st.classList.remove('show'), 2000);
+  });
+}
+
+function downloadMd(){
+  const text = document.getElementById('nl-output').textContent;
+  const blob = new Blob([text], {type:'text/markdown;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'narrativa_prompt.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+const PHASE_INSTRUCTIONS = {
+  1: `**FASE 1 — DESCOBERTA DO NÚCLEO NARRATIVO**
+Não escreva cenas ou prosa final ainda. Encontre o **centro vivo** da história:
+1. Pergunta dramática central (o que move a trama do início ao fim).
+2. Conflito causal e ferida temática.
+3. O custo real do elemento especulativo (se houver).
+4. 3 caminhos possíveis de desenvolvimento com prós e contras.`,
+  2: `**FASE 2 — ARQUITETURA DO UNIVERSO**
+Transforme o núcleo em um sistema vivo (não apenas lore). Para cada módulo de worldbuilding ativado, defina:
+1. Regras e limites claros (o que NÃO pode acontecer).
+2. Impacto cotidiano na vida das pessoas comuns.
+3. Quem controla os recursos/tecnologias e quem paga o preço.
+4. Tensões geográficas, políticas ou culturais prontas para gerar conflito.`,
+  3: `**FASE 3 — PROTAGONISTA, ELENCO MÍNIMO E TESTE DE RESISTÊNCIA**
+1. Protagonista: Desejo externo vs. Necessidade interna vs. Falha trágica/Ferida.
+2. Elenco mínimo funcional: Quem contradiz o protagonista? Qual relação carrega o coração emocional?
+3. Teste de Resistência: O protagonista tem agência própria ou apenas reage? Como ele muda até o final?`,
+  4: `**FASE 4 — ESTRUTURA E PREMISSA EMOCIONAL**
+Organize a história usando o framework estrutural escolhido:
+1. Mapeie os pontos de virada (Incidente Incitante, Ponto de Virada I, Ponto Médio, Crise/Ponto de Virada II, Clímax, Resolução).
+2. Defina a escalada de stakes (apostas) a cada ato.
+3. Garanta que cada virada seja causada por uma escolha do protagonista, não por coincidência.`,
+  5: `**FASE 5 — ESCRITA (MAPA DE CENAS E PROSA)**
+1. Para cada cena/bloco: Objetivo do personagem, Obstáculo, Resultado (mudança de valor +/-).
+2. Evite info dump: revele o mundo apenas quando a falta de contexto impedir o leitor de entender o que está em jogo.
+3. Subtexto nos diálogos: ninguém explica o que o outro já sabe.`,
+  6: `**FASE 6 — REVISÃO E DIAGNÓSTICO FINO**
+Faça uma leitura crítica do material:
+1. Onde o ritmo cai ou a tensão se perde?
+2. Há personagens intercambiáveis ou falas expositivas?
+3. O final responde à pergunta dramática aberta na Fase 1?`
+};
+
+function runPipeline(){
+  const genero = v('p-genero') || 'Ficção Especulativa';
+  const formato = v('p-formato');
+  const premissa = v('p-premissa') || '[Descreva sua premissa aqui]';
+  const abordagem = v('p-abordagem');
+  const framework = v('p-framework');
+  const saida = v('p-saida');
+  const mods = getWBModules();
+  const inter = getInteractionParams();
+  const ctx = v('p-contexto');
+
+  const prompt = `Você é um **consultor criativo sênior, editor de desenvolvimento e arquiteto de narrativas**.
+
+**PARÂMETROS DO PROJETO**
+- **Gênero:** ${genero}
+- **Formato:** ${formato}
+- **Abordagem:** ${abordagem}
+- **Framework Estrutural:** ${framework}
+- **Nível de Saída:** ${saida}
+- **Módulos de Worldbuilding Ativos:** ${mods.length ? mods.join(' · ') : 'Nenhum específico'}
+- **Parâmetros de Interação (Civilizações/Espécies):** ${inter.length ? inter.join(' · ') : 'Nenhum específico'}
+
+**PREMISSA / IDEIA CENTRAL**
+${premissa}
+${ctx ? `\n**CONTEXTO ACUMULADO (FASES ANTERIORES)**\n${ctx}\n` : ''}
+---
+
+${PHASE_INSTRUCTIONS[currentPhase]}
+
+Entregue a resposta de forma clara, prática e acionável, pronta para ser usada na próxima etapa.`;
+
+  setOutput(prompt);
+}
+
+function runCriacao(){
+  const ideia = v('c-ideia') || '[Insira sua ideia]';
+  const tom = v('c-tom') || 'Equilibrado';
+  const protag = v('c-protag') || 'A definir';
+  const conflito = v('c-conflito') || 'A definir';
+
+  setOutput(`Você é o Narrativa.LAB no Modo Criação Rápida.
+
+**PARÂMETROS:**
+- **Premissa:** ${ideia}
+- **Tom / Atmosfera:** ${tom}
+- **Protagonista:** ${protag}
+- **Conflito Central & Stakes:** ${conflito}
+
+**TAREFA:**
+1. Estruture um roteiro/beat sheet claro (Início, Incidente Incitante, Escalada, Ponto Médio, Crise, Clímax e Resolução).
+2. Descreva o arco interno do protagonista (desejo vs. necessidade).
+3. Escreva a **cena de abertura** completa (sem info dump, começando em ação ou tensão).`);
+}
+
+function runAnalise(){
+  const obra = v('a-obra') || '[Cole a obra ou sinopse]';
+  setOutput(`Você é o Narrativa.LAB no Modo Análise de Obra.
+
+**OBRA / SINOPSE:**
+${obra}
+
+**ANALISE:**
+1. Qual é a pergunta dramática central e o motor do conflito?
+2. Qual framework estrutural melhor descreve esta obra (Três Atos, Save the Cat, Story Circle, Kishōtenketsu)? Mapeie os beats principais.
+3. Quais são os pontos fortes e as possíveis fragilidades estruturais?`);
+}
+
+function runDiag(){
+  const texto = v('d-texto');
+  if(!texto){ alert('Cole um trecho de texto para diagnosticar.'); return; }
+  const ctx = v('d-ctx');
+  const focos = ['Armadilhas narrativas','Voz e ritmo','Diálogo','Estrutura da cena'].filter((_,i)=>chk('d'+(i+1)));
+
+  setOutput(`Você é o Narrativa.LAB no Modo Diagnóstico — editor especializado em análise cirúrgica de texto narrativo. Cite a frase exata para cada problema.
+
+${ctx ? '**CONTEXTO:** ' + ctx + '\n' : ''}**FOCOS:** ${focos.join(' · ')}
+
+**TRECHO:**
+---
+${texto}
+---
+
+**ESTRUTURA DA RESPOSTA:**
+1. **O QUE FUNCIONA** (com citação)
+${focos.includes('Armadilhas narrativas') ? '2. **ARMADILHAS** (Info dump, Protagonista reativo, Diálogo expositivo, Tema pregado)\n' : ''}${focos.includes('Voz e ritmo') ? '3. **VOZ E RITMO**\n' : ''}${focos.includes('Diálogo') ? '4. **DIÁLOGO**\n' : ''}${focos.includes('Estrutura da cena') ? '5. **ESTRUTURA DA CENA** (Objetivo, Obstáculo, Resultado)\n' : ''}6. **REESCRITA SUGERIDA** (Antes e Depois do maior problema)`);
+}
+
+function runDNA(){
+  const fichas = v('dna-fichas') || '[Liste suas obras de referência]';
+  const proj = v('dna-proj');
+  setOutput(`Você é o Narrativa.LAB no Modo DNA Criativo.
+
+**OBRAS DE REFERÊNCIA:**
+${fichas}
+${proj ? '\n**PROJETO ATUAL:** ' + proj + '\n' : ''}
+**EXECUTE:**
+1. Mapeie os padrões temáticos e estruturais recorrentes nessas obras.
+2. Identifique 3 a 5 tensões criativas (ex: "herói clássico ↔ anti-herói").
+3. Sintetize a voz autoral em 150 palavras.
+4. Sugira como aplicar esse DNA ao projeto atual.`);
+}
+</script>
+</body>
+</html>
