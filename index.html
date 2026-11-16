@@ -316,7 +316,10 @@ textarea{min-height:90px}
           <div id="phase-info" class="nl-info-box" style="margin-bottom:14px"></div>
 
           <div class="nl-field">
-            <label class="nl-label" for="p-contexto">Resumo do que você já definiu (Opcional)</label>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <label class="nl-label" for="p-contexto" style="margin-bottom:0">Resumo do que você já definiu (Opcional)</label>
+              <button type="button" class="nl-btn nl-btn-sec nl-btn-sm" onclick="runSummarizeContext()">✂️ Gerar Prompt de Resumo</button>
+            </div>
             <textarea id="p-contexto" placeholder="Se você já gerou a Fase 1 ou 2 na IA, cole o resumo aqui para a próxima fase continuar de onde parou..."></textarea>
           </div>
         </div>
@@ -427,6 +430,10 @@ textarea{min-height:90px}
     <pre id="nl-output" class="nl-output-pre">1. Preencha os passos à esquerda (ou escolha um modelo pronto no topo).
 2. Clique em "Gerar Prompt Agora".
 3. Copie o texto e cole no ChatGPT, Claude ou Gemini.</pre>
+    <div id="nl-token-bar" style="margin-top:8px;font-size:11.5px;color:var(--text-tertiary);display:flex;justify-content:space-between">
+      <span>Tamanho: <strong id="nl-char-count">0</strong> caracteres (~<strong id="nl-token-count">0</strong> tokens)</span>
+      <span id="nl-token-warn" style="color:var(--warning);display:none">Contexto longo — considere usar "Gerar Prompt de Resumo"</span>
+    </div>
   </aside>
 </main>
 
@@ -828,6 +835,36 @@ function getChecked(prefix, count){
 
 function setOutput(text){
   document.getElementById('nl-output').textContent = text;
+  const chars = text.length;
+  const tokens = Math.ceil(chars / 4);
+  const cc = document.getElementById('nl-char-count');
+  const tc = document.getElementById('nl-token-count');
+  const tw = document.getElementById('nl-token-warn');
+  if(cc) cc.textContent = chars.toLocaleString('pt-BR');
+  if(tc) tc.textContent = tokens.toLocaleString('pt-BR');
+  if(tw) tw.style.display = tokens > 3000 ? 'inline' : 'none';
+}
+
+function runSummarizeContext(){
+  const ctx = v('p-contexto');
+  if(!ctx || ctx.trim().length < 20){
+    alert('Cole primeiro o texto longo no campo "Resumo do que você já definiu" para gerar o prompt de resumo.');
+    return;
+  }
+  setOutput(`Você é um **editor de desenvolvimento** especialista em síntese narrativa.
+
+**TAREFA:**
+Resuma o material abaixo em **no máximo 250 palavras**, em tópicos diretos, preservando APENAS:
+1. Decisões fechadas (regras do mundo, nomes, limitações).
+2. Conflito central e o que está em jogo.
+3. Arco ou estado atual dos personagens.
+
+Corte adjetivos, explicações longas e exemplos. O resultado será colado como contexto da próxima fase.
+
+**MATERIAL PARA RESUMIR:**
+---
+${ctx}
+---`);
 }
 
 function copyOutput(){
@@ -850,6 +887,15 @@ function downloadMd(){
   URL.revokeObjectURL(url);
 }
 
+const PHASE_ROLES = {
+  1: "Showrunner e Consultor de Desenvolvimento Narrativo (especialista em encontrar o motor dramático e o conflito central)",
+  2: "Arquiteto de Mundos e Antropólogo Especulativo (especialista em sistemas vivos, escassez, poder e consequências culturais)",
+  3: "Psicólogo Dramático e Designer de Elenco (especialista em desejo vs. necessidade, contradições e agência do protagonista)",
+  4: "Roteirista-Chefe e Engenheiro de Estrutura (especialista em ritmo, escalada de apostas e pontos de virada)",
+  5: "Romancista e Diretor de Cena (especialista em prosa vívida, subtexto em diálogos e tensão cena a cena)",
+  6: "Editor Cirúrgico e Crítico Literário (especialista em cortes, voz narrativa, consistência e polimento final)"
+};
+
 function runPipeline(){
   const genero = v('p-genero') || 'Ficção Especulativa';
   const formato = v('p-formato');
@@ -860,8 +906,9 @@ function runPipeline(){
   const mods = getChecked('wb', 9);
   const inter = getChecked('pm', 9);
   const ctx = v('p-contexto');
+  const role = PHASE_ROLES[currentPhase] || PHASE_ROLES[1];
 
-  const prompt = `Você é um **consultor criativo sênior, editor de desenvolvimento e arquiteto de narrativas**.
+  const prompt = `Você é um **${role}**.
 
 **PARÂMETROS DO PROJETO**
 - **Gênero:** ${genero}
