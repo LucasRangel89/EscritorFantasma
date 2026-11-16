@@ -316,7 +316,10 @@ textarea{min-height:90px}
           <div id="phase-info" class="nl-info-box" style="margin-bottom:14px"></div>
 
           <div class="nl-field">
-            <label class="nl-label" for="p-contexto">Resumo do que você já definiu (Opcional)</label>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <label class="nl-label" for="p-contexto" style="margin-bottom:0">Resumo do que você já definiu (Opcional)</label>
+              <button type="button" class="nl-btn nl-btn-sec nl-btn-sm" onclick="runSummarizeContext()">✂️ Gerar Prompt de Resumo</button>
+            </div>
             <textarea id="p-contexto" placeholder="Se você já gerou a Fase 1 ou 2 na IA, cole o resumo aqui para a próxima fase continuar de onde parou..."></textarea>
           </div>
         </div>
@@ -377,6 +380,7 @@ textarea{min-height:90px}
           </div>
         </div>
         <button type="button" class="nl-btn" onclick="runDiag()">✨ Gerar Prompt de Diagnóstico</button>
+        <div id="diag-metrics" class="nl-info-box" style="display:none;margin-top:14px"></div>
       </div>
     </div>
 
@@ -426,6 +430,10 @@ textarea{min-height:90px}
     <pre id="nl-output" class="nl-output-pre">1. Preencha os passos à esquerda (ou escolha um modelo pronto no topo).
 2. Clique em "Gerar Prompt Agora".
 3. Copie o texto e cole no ChatGPT, Claude ou Gemini.</pre>
+    <div id="nl-token-bar" style="margin-top:8px;font-size:11.5px;color:var(--text-tertiary);display:flex;justify-content:space-between">
+      <span>Tamanho: <strong id="nl-char-count">0</strong> caracteres (~<strong id="nl-token-count">0</strong> tokens)</span>
+      <span id="nl-token-warn" style="color:var(--warning);display:none">Contexto longo — considere usar "Gerar Prompt de Resumo"</span>
+    </div>
   </aside>
 </main>
 
@@ -433,6 +441,39 @@ textarea{min-height:90px}
 let currentPhase = 1;
 let currentPanel = 'guiado';
 let currentStep = 1;
+
+const WB_DEFS = {
+  "Física e Cosmologia": "Leis naturais, gravidade, clima, ciclos astronômicos e limites físicos do cenário.",
+  "Biologia e Ecologia": "Ecologia, cadeias alimentares, adaptações evolutivas e restrições biológicas das espécies.",
+  "Economia e Recursos": "Escassez, insumos críticos, rotas de troca, quem produz e quem concentra riqueza.",
+  "Ciência Política e Poder": "Instituições, legitimidade, facções, monopólio da força e disputas de soberania.",
+  "Sociologia e Castas": "Estratificação social, tabus, normas cotidianas, trabalho e mobilidade.",
+  "Religião e Mitopoiese": "Cosmogonias, rituais, heresias, o sagrado como força social e política.",
+  "Linguística": "Idiomas, jargões, barreiras de tradução e como a língua molda a percepção.",
+  "Tecnologia Especulativa": "Ferramentas, magia ou ciência aplicada, seus insumos e efeitos colaterais sociais.",
+  "Xenopsicologia": "Cognição não-humana, percepção de tempo/espaço, emoções e valores alheios aos humanos."
+};
+
+const PM_DEFS = {
+  "Barreira de Comunicação": "Limites sensoriais, semânticos ou de canal que distorcem ou impedem a troca direta.",
+  "Transparência Intencional": "O quanto cada lado oculta intenções, blefa ou é incapaz de mentir.",
+  "Assimetria de Escala Temporal": "Diferença de longevidade, ritmo biológico ou horizonte histórico entre os grupos.",
+  "Contágio Cultural": "Troca, assimilação ou rejeição de hábitos, símbolos e ideias após o contato.",
+  "Dependência Assimétrica": "Quando um grupo precisa mais do outro (recursos, proteção, saber) e isso gera poder.",
+  "Compatibilidade Biológica": "Riscos de contágio, dieta, atmosfera, reprodução ou coexistência física.",
+  "Memória do Primeiro Contato": "Como o encontro inicial foi registrado e mitificado por cada lado.",
+  "Grau de Necessidade Mútua": "Se a cooperação é opcional, vantajosa ou questão de sobrevivência imediata.",
+  "Compatibilidade Psicológica Profunda": "Convergência ou choque entre instintos básicos, empatia e noção de identidade."
+};
+
+const FRAMEWORK_BEATS = {
+  "Três Atos": "Ato I (Status Quo, Incidente Incitante, Ponto de Virada I) → Ato II (Escalada, Ponto Médio, Crise / Tudo Perdido, Ponto de Virada II) → Ato III (Clímax, Resolução).",
+  "Save the Cat": "1. Imagem de Abertura · 2. Tema Declarado · 3. Setup · 4. Catalisador · 5. Debate · 6. Entrada no Ato II · 7. Trama B · 8. Diversão e Jogos · 9. Ponto Médio · 10. Vilões se Aproximam · 11. Tudo Está Perdido · 12. Noite Escura da Alma · 13. Entrada no Ato III · 14. Finale · 15. Imagem Final.",
+  "Story Circle": "1. Você (zona de conforto) · 2. Precisa (desejo) · 3. Vai (situação desconhecida) · 4. Procura (adaptação) · 5. Encontra (consegue o que queria) · 6. Paga o preço · 7. Retorna · 8. Mudou.",
+  "Kishōtenketsu": "1. Ki (Introdução) · 2. Shō (Desenvolvimento) · 3. Ten (Reviravolta / elemento inesperado que muda a perspectiva, sem exigir vilão ou confronto) · 4. Ketsu (Conclusão / síntese).",
+  "Jornada do Herói": "Mundo Comum → Chamado à Aventura → Recusa → Mentor → Travessia do Limiar → Provas/Aliados/Inimigos → Caverna Profunda → Provação Suprema → Recompensa → Caminho de Volta → Ressurreição → Retorno com o Elixir.",
+  "Arco Trágico": "1. Virtude/Talento inicial · 2. Falha trágica (hamartia) · 3. Tentação/Escolha errada · 4. Sucesso ilusório · 5. Ponto sem retorno · 6. Isolamento/Escalada · 7. Queda/Catástrofe · 8. Reconhecimento tardio."
+};
 
 const FRAMEWORK_INFO = {
   "Três Atos": "<strong>Ideal para:</strong> A maioria das histórias.<br><strong>Como funciona:</strong> Começo (apresentação + problema), Meio (confrontos e complicações) e Fim (clímax + resolução).",
@@ -794,6 +835,36 @@ function getChecked(prefix, count){
 
 function setOutput(text){
   document.getElementById('nl-output').textContent = text;
+  const chars = text.length;
+  const tokens = Math.ceil(chars / 4);
+  const cc = document.getElementById('nl-char-count');
+  const tc = document.getElementById('nl-token-count');
+  const tw = document.getElementById('nl-token-warn');
+  if(cc) cc.textContent = chars.toLocaleString('pt-BR');
+  if(tc) tc.textContent = tokens.toLocaleString('pt-BR');
+  if(tw) tw.style.display = tokens > 3000 ? 'inline' : 'none';
+}
+
+function runSummarizeContext(){
+  const ctx = v('p-contexto');
+  if(!ctx || ctx.trim().length < 20){
+    alert('Cole primeiro o texto longo no campo "Resumo do que você já definiu" para gerar o prompt de resumo.');
+    return;
+  }
+  setOutput(`Você é um **editor de desenvolvimento** especialista em síntese narrativa.
+
+**TAREFA:**
+Resuma o material abaixo em **no máximo 250 palavras**, em tópicos diretos, preservando APENAS:
+1. Decisões fechadas (regras do mundo, nomes, limitações).
+2. Conflito central e o que está em jogo.
+3. Arco ou estado atual dos personagens.
+
+Corte adjetivos, explicações longas e exemplos. O resultado será colado como contexto da próxima fase.
+
+**MATERIAL PARA RESUMIR:**
+---
+${ctx}
+---`);
 }
 
 function copyOutput(){
@@ -816,6 +887,15 @@ function downloadMd(){
   URL.revokeObjectURL(url);
 }
 
+const PHASE_ROLES = {
+  1: "Showrunner e Consultor de Desenvolvimento Narrativo (especialista em encontrar o motor dramático e o conflito central)",
+  2: "Arquiteto de Mundos e Antropólogo Especulativo (especialista em sistemas vivos, escassez, poder e consequências culturais)",
+  3: "Psicólogo Dramático e Designer de Elenco (especialista em desejo vs. necessidade, contradições e agência do protagonista)",
+  4: "Roteirista-Chefe e Engenheiro de Estrutura (especialista em ritmo, escalada de apostas e pontos de virada)",
+  5: "Romancista e Diretor de Cena (especialista em prosa vívida, subtexto em diálogos e tensão cena a cena)",
+  6: "Editor Cirúrgico e Crítico Literário (especialista em cortes, voz narrativa, consistência e polimento final)"
+};
+
 function runPipeline(){
   const genero = v('p-genero') || 'Ficção Especulativa';
   const formato = v('p-formato');
@@ -826,8 +906,9 @@ function runPipeline(){
   const mods = getChecked('wb', 9);
   const inter = getChecked('pm', 9);
   const ctx = v('p-contexto');
+  const role = PHASE_ROLES[currentPhase] || PHASE_ROLES[1];
 
-  const prompt = `Você é um **consultor criativo sênior, editor de desenvolvimento e arquiteto de narrativas**.
+  const prompt = `Você é um **${role}**.
 
 **PARÂMETROS DO PROJETO**
 - **Gênero:** ${genero}
@@ -885,15 +966,37 @@ ${obra}
 3. Quais são os pontos fortes e as possíveis fragilidades estruturais?`);
 }
 
+function analyzeTextLocal(texto){
+  const words = texto.trim().split(/\s+/).filter(Boolean);
+  const sentences = texto.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const avgWords = sentences.length ? (words.length / sentences.length).toFixed(1) : 0;
+  const mente = (texto.match(/\b\w+mente\b/gi) || []).length;
+  const filters = (texto.match(/\b(parecia|começou a|começava a|sentiu que|percebeu que|notou que|viu que|ouviu que)\b/gi) || []).length;
+  const lines = texto.split('\n').filter(l => l.trim().length > 0);
+  const dialogLines = lines.filter(l => /^\s*[—\-–"«]/.test(l)).length;
+  const dialogPct = lines.length ? Math.round((dialogLines / lines.length) * 100) : 0;
+  return { wordCount: words.length, sentenceCount: sentences.length, avgWords, mente, filters, dialogPct };
+}
+
 function runDiag(){
   const texto = v('d-texto');
   if(!texto){ alert('Cole um trecho de texto para diagnosticar.'); return; }
   const ctx = v('d-ctx');
   const focos = ['Armadilhas narrativas','Voz e ritmo','Diálogo','Estrutura da cena'].filter((_,i)=>chk('d'+(i+1)));
+  const m = analyzeTextLocal(texto);
+
+  const box = document.getElementById('diag-metrics');
+  if(box){
+    box.style.display = 'block';
+    box.innerHTML = `<strong>Métricas Locais (100% no navegador):</strong><br>
+    Palavras: <strong>${m.wordCount}</strong> · Frases: <strong>${m.sentenceCount}</strong> (média ${m.avgWords} pal./frase)<br>
+    Advérbios em <em>-mente</em>: <strong>${m.mente}</strong> · Verbos-filtro: <strong>${m.filters}</strong> · Diálogo: <strong>${m.dialogPct}%</strong> das linhas`;
+  }
 
   setOutput(`Você é o Narrativa.LAB no Modo Diagnóstico — editor especializado em análise cirúrgica de texto narrativo. Cite a frase exata para cada problema.
 
 ${ctx ? '**CONTEXTO:** ' + ctx + '\n' : ''}**FOCOS:** ${focos.join(' · ')}
+**MÉTRICAS AUTOMÁTICAS DO TRECHO:** ${m.wordCount} palavras · ${m.sentenceCount} frases (média ${m.avgWords} pal./frase) · ${m.mente} advérbios em "-mente" · ${m.filters} verbos-filtro · ${m.dialogPct}% linhas de diálogo.
 
 **TRECHO:**
 ---
@@ -902,7 +1005,7 @@ ${texto}
 
 **ESTRUTURA DA RESPOSTA:**
 1. **O QUE FUNCIONA** (com citação)
-${focos.includes('Armadilhas narrativas') ? '2. **ARMADILHAS** (Info dump, Protagonista reativo, Diálogo expositivo, Tema pregado)\n' : ''}${focos.includes('Voz e ritmo') ? '3. **VOZ E RITMO**\n' : ''}${focos.includes('Diálogo') ? '4. **DIÁLOGO**\n' : ''}${focos.includes('Estrutura da cena') ? '5. **ESTRUTURA DA CENA** (Objetivo, Obstáculo, Resultado)\n' : ''}6. **REESCRITA SUGERIDA** (Antes e Depois do maior problema)`);
+${focos.includes('Armadilhas narrativas') ? '2. **ARMADILHAS** (Info dump, Protagonista reativo, Diálogo expositivo, Tema pregado)\n' : ''}${focos.includes('Voz e ritmo') ? '3. **VOZ E RITMO** (avalie também o uso de advérbios em -mente e verbos-filtro)\n' : ''}${focos.includes('Diálogo') ? '4. **DIÁLOGO**\n' : ''}${focos.includes('Estrutura da cena') ? '5. **ESTRUTURA DA CENA** (Objetivo, Obstáculo, Resultado)\n' : ''}6. **REESCRITA SUGERIDA** (Antes e Depois do maior problema)`);
 }
 
 function runDNA(){
